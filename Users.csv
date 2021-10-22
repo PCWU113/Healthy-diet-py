@@ -1,0 +1,14 @@
+Name,Height,Gender,Allergy
+Bob,170,Male,"[""Eggs"",""Milk""]"
+Lucy,160,Female,
+John,175,Male,"['Nuts', 'Milk', 'Eggs', 'Oil', 'Gluten', 'Seafood']"
+Leo,180,Male,"['Nuts', 'Milk ', 'Milk', 'Eggs', 'Oil', 'Gluten', 'Seafood']"
+peter,200,Male,"['Nuts', 'Milk ', 'Milk', 'Eggs', 'Oil', 'Gluten', 'Seafood']"
+pig,90,Male,"['Seafood', 'Milk ']"
+pop,190,Male,['Nuts']
+oo,190,Male,"['Milk ', 'Seafood', 'Eggs']"
+Lu Xi,160,Male,['Nuts']
+carrie,165,Female,['Nuts']
+zhu,190,Male,['Milk ']
+leo wu,180,Male,['Nuts']
+oop,190,Male,['Milk ']
