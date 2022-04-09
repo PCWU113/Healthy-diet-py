@@ -1,0 +1,245 @@
+# Import packages
+import streamlit as st
+import pandas as pd
+from datetime import datetime
+import plotly.express as px
+import random
+
+# Define
+DAILY_FOOD_TYPE = 6
+
+# File path
+file_nutritions = 'data/Nutritions.csv'
+file_allergy = 'data/Allergy.csv'
+file_weight_change = 'data/Weight Change.csv'
+file_user = 'data/Users.csv'
+
+# Classes and Functions
+class Person:
+    def __init__(self, name, weight, height, gender, ls_allergy):
+        """Contains all the important information about a user"""
+        self.name = name
+        self.weight = weight
+        self.height = height
+        self.gender = gender
+        self.ls_allergy = ls_allergy
+        self.status_message = ''
+    
+    
+    def __calculate_bmi(self):
+        """In this part, we try to calculate the bmi according to the user's weight and height"""
+
+        bmi = round(float(self.weight)/(float(self.height)/100)**2,2)
+
+        return bmi
+  
+    
+    def bmi_status(self):
+        """This part is to calculate the BMI according to the before personal 
+        information. And establishing intervals for classification """
+        bmi = self.__calculate_bmi()
+        if bmi < 18.5:
+            self.status_message = f"You Are Underweight, BMI is {bmi}"
+        elif 18.5 <= bmi < 25:
+            self.status_message = f"You Are Normal weight, BMI is {bmi}"
+        elif 25 <= bmi < 30:
+            self.status_message = f"You Are Overweight, BMI is {bmi}"
+        else:
+            self.status_message = f"You Are Obsity, BMI is {bmi}"
+        
+        print(self.status_message)
+    
+    def plot_weight_changes(self, df_weight_change):
+        """Using plotly.express can directly visualize to the weight change"""
+
+        df_plot = df_weight_change[df_weight_change['Name'] == self.name]
+        df_plot['Date'] = pd.to_datetime(df_plot['Date'], format = '%Y/%m/%d')
+        df_plot = df_plot.sort_values('Date')
+        data_frame = df_plot
+
+        plot = px.line(data_frame, x='Date', y="Weight/kg", title="{0}'weight Over Time.".format(self.name), markers=True)
+        st.plotly_chart(plot)
+
+#class the Diet part
+class Diet_Generator:
+    
+    def __init__(self, df_nutritions, df_allergy, ls_allergy):
+        """get the nutrition and allergy"""
+
+        self.df_nutritions = df_nutritions
+        self.df_allergy = df_allergy
+        self.ls_allergy = ls_allergy
+        self.message = ''
+        self.df_weekly_diet = pd.DataFrame()
+
+            
+    def check_allergy(self):
+        """check first, only generate diet table when there are more than two types avaiable"""
+        num_type_available = self.df_nutritions.loc[~self.df_nutritions['type'].isin(self.ls_allergy),'type'].nunique()
+        if num_type_available < 2:
+            self.message = 'Too many allergy, not enough avaiable food.'
+            print(self.message)
+            return False
+        else:
+            if len(self.ls_allergy) > 0:
+                self.message = "The allergy type: " + ','.join(self.ls_allergy) + '.'
+            return True
+      
+    def generate_daily_diet(self):
+        """this part will generate the daily diet by random according to known nutrition and allergy filtering"""
+        df_food_available = self.df_nutritions[~self.df_nutritions['type'].isin(self.ls_allergy)]
+        ls_food_available = df_food_available['item'].unique().tolist()
+        ls_daily_diet = random.sample(ls_food_available, DAILY_FOOD_TYPE)
+        
+        df_diet = self.df_nutritions[self.df_nutritions['item'].isin(ls_daily_diet)]
+        df_diet = df_diet.assign(food_calories = list(zip(df_diet['item'], df_diet['Calories/100g'])))
+        ls_daily_diet = df_diet['food_calories'].astype(str).tolist()
+        
+        return ls_daily_diet
+    
+    def generate_weekly_diet(self):
+        """running loop for generating the weekly diet"""
+        if self.check_allergy(): 
+            
+            ls_weekday = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+            dict_weekly_diet = {}
+
+            for i in range(0,7):
+                dict_weekly_diet[ls_weekday[i]] = self.generate_daily_diet()
+
+            self.df_weekly_diet = pd.DataFrame(dict_weekly_diet)  
+
+
+def read_data(file_nutritions, file_allergy, file_weight_change, file_user):
+    """read the file"""
+    df_nutritions = pd.read_csv(file_nutritions)
+    df_allergy = pd.read_csv(file_allergy)
+    df_weight_change = pd.read_csv(file_weight_change)
+    df_users = pd.read_csv(file_user)
+    
+    return df_nutritions, df_allergy, df_weight_change, df_users
+
+def record_new_user(input_user, df_users):
+    """record the new user information into the file that has been already prepared before"""
+
+    df_users_new = df_users.append({'Name':input_user['name'], 'Height': input_user['height'], 'Gender': input_user['gender'], 'Allergy': input_user['ls_allergy']}, ignore_index = True)
+
+    df_users_new.to_csv(file_user, index=False)
+
+def record_weight(name, date, weight, df_weight_change):
+    """from the name,date,weight,and change, recording the weight information"""
+
+    date_formated = pd.to_datetime(date, format='%Y/%m/%d') # transfer the format
+    df_weight_change_new = df_weight_change.append({'Name': name, 'Date': date_formated, 'Weight/kg': weight}, ignore_index=True)
+                                
+    df_weight_change_new.to_csv(file_weight_change, index=False)
+    
+    return df_weight_change_new
+
+def get_create_user(input_user, date, df_users, df_weight_change):
+    """in this part, we use the if statement to seperate the existed user and new user"""
+
+    name = input_user['name']
+    weight = input_user['weight']
+    ls_existed_user_names = df_users['Name'].tolist()
+
+    if name in ls_existed_user_names: # if existed_user
+        row_user = df_users.loc[df_users['Name'] == name]
+        height = row_user['Height'].tolist()[0]
+        gender = row_user['Gender'].tolist()[0]
+        ls_allergy = eval(row_user['Allergy'].tolist()[0]) #list to string
+
+    else:  # new user
+        height = input_user['height']
+        gender = input_user['gender']
+        ls_allergy = input_user['ls_allergy']
+
+        record_new_user(input_user, df_users)
+    
+    df_weight_change_new = record_weight(name, date, weight, df_weight_change)
+
+    user = Person(name, weight, height, gender, ls_allergy)
+
+    return user, df_weight_change_new
+
+def get_weekly_diet(df_nutritions, df_allergy, ls_allergy):
+    """create the weekly diet"""
+    diet = Diet_Generator(df_nutritions, df_allergy, ls_allergy)
+    diet.generate_weekly_diet()
+    msg_allergy = diet.message
+    df_diet = diet.df_weekly_diet
+    
+    return msg_allergy, df_diet
+
+# Streamlit part
+def sidebar(df_nutritions, df_allergy, df_weight_change):
+    """in the function, we need to build up the Sidebar in final streamlit part"""
+    st.sidebar.header('Input')
+
+    # Sidebar - person selection
+    ls_person = ['New user'] + df_weight_change['Name'].unique().tolist()
+    selected_person = st.sidebar.selectbox('Person', ls_person)
+
+    ls_allergy = df_allergy['Types'].unique().tolist()
+
+    # show for new user
+    if selected_person == 'New user':
+        name = st.sidebar.text_input('Name')
+        gender = st.sidebar.selectbox('Gender', ['Male', 'Female'])
+        weight = st.sidebar.text_input('Weight/kg')
+        height = st.sidebar.text_input('Height/cm')
+        allergy = st.sidebar.multiselect('Allergy', ls_allergy)
+        
+        date = st.sidebar.date_input('Date',datetime.now())
+    else:
+        name = selected_person
+        weight = st.sidebar.text_input('Weight/kg')
+        date = st.sidebar.date_input('Date',datetime.now())# Current the date shown
+        height, gender, ls_allergy = None, None, []
+    
+    input_user = {'name': name, 'weight': weight, 'height': height, 'gender': gender, 'ls_allergy': ls_allergy}
+    if_run = st.sidebar.button('Run')
+    return input_user, date, if_run
+
+# Main Frame
+def main_frame_default():
+    """main frame"""
+    st.title('Generate Weekly Diet')
+
+    st.markdown("Health shown description. ")
+
+
+def main_frame_run(input_user, date, df_users, df_weight_change, df_nutritions, df_allergy):
+    """main together frame set up"""
+
+    # Instantiate
+    user, df_weight_change_new = get_create_user(input_user, date, df_users, df_weight_change)
+    
+    # print status_message
+    user.bmi_status()
+    st.write(user.status_message)
+    
+    # plot weight
+    user.plot_weight_changes(df_weight_change_new)
+
+    # generate diet
+    msg_allergy, df_diet = get_weekly_diet(df_nutritions, df_allergy, user.ls_allergy)
+    st.write(msg_allergy)
+    st.dataframe(df_diet)
+
+
+
+def main():
+    """main function"""
+
+    df_nutritions, df_allergy, df_weight_change, df_users = read_data(file_nutritions, file_allergy, file_weight_change, file_user)
+
+    input_user, date, if_run = sidebar(df_nutritions, df_allergy, df_weight_change)
+    
+    main_frame_default()
+
+    if if_run:
+        main_frame_run(input_user, date, df_users, df_weight_change, df_nutritions, df_allergy)
+
+main()
