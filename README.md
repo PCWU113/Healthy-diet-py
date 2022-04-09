@@ -1,4 +1,4 @@
-# Healthy diet python programme for 480
+# Healthy diet python programme 
 ## install
 ! pip install 
 random
