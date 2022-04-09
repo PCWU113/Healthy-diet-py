@@ -1,0 +1,44 @@
+﻿type,item,Calories/100g
+Fruit,Apple,52
+Fruit,Pear,44
+Fruit,Grape,43
+Fruit,Peach,48
+Fruit,Kiwifruit,56
+Fruit,Oranges,52
+Fruit,Banana,53
+Fruit,Plum,55
+Fruit,Papaya,56
+Fruit,Watermelon,25
+Vegetables,Carrot,37
+Vegetables,Celery,14
+Vegetables,Potato,76
+Vegetables,Tomato,19
+Vegetables,Lettuce,15
+Vegetables,Onion,21
+Vegetables,Beans,17
+Vegetables,Broccoli,13
+Vegetables,Chinese Cabbage,9
+Vegetables,Beetroot,5
+Meat ,Chicken Breast,167
+Meat ,Chicken Thigh,180
+Meat ,Pork Lean,380
+Eggs,Egg,144
+Meat ,Beef,107
+Meat ,Lamb,203
+Seafood,Shrimp,100
+Seafood,Fish,113
+Seafood,Grab,90
+Seafood,Scallop,100
+Carbohydrate,White Rice,346
+Carbohydrate,Brown Rice,300
+Carbohydrate,Noodle,280
+Carbohydrate,Spaghetti,200
+Carbohydrate,Corn,100
+Carbohydrate,Toast Bread,312
+Oil,Soya-bean Oil,899
+Oil,Olive Oil,899
+Oil,Sunflower bean oil,899
+Nuts,Chestnut,552
+Nuts,Peanut,650
+Nuts,Almond,500
+Nuts,Cashew Nut,515
